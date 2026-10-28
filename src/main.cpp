@@ -13,11 +13,8 @@ int main(void)
         update();
         // Archive records only after finishing, while the run timer is stopped.
         speedrun_flush_pending();
-    } while(!kb_IsDown(kb_KeyClear) && !kb_IsDown(kb_KeyDel));
-    if(!kb_IsDown(kb_KeyDel)) {
-        save_game();
-    }
-    // Del skips the current-run save, but never discards earned records.
+    } while(!kb_IsDown(kb_KeyClear));
+    save_game();
     speedrun_save_records();
     gfx_End();
     return 0;

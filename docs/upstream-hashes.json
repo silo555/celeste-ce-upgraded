@@ -1,0 +1,24 @@
+{
+  "upstream_commit": "538f42e001c0455bfda2f47d82b2550b81c51002",
+  "sections": [
+    {
+      "name": "player/entities",
+      "start": "Player::Player(",
+      "end": "Flag::Flag(",
+      "sha256": "f9a0a7fffe8b1e5718d1adc145ce158e76f3502e4465240416d63e38654fb629"
+    },
+    {
+      "name": "object movement/collisions/death",
+      "start": "Object::Object(",
+      "end": "// room functions //",
+      "sha256": "76bc71493e7ee809dcf1155a082de3a5780ba523c8b12d4ce3d0d614d23081dd"
+    },
+    {
+      "name": "collision/spike helpers",
+      "start": "int clamp(",
+      "end": "bool needs_save(",
+      "sha256": "1a8c19f848e17fab761d07bfcf3f9dc861a57d0e2a3d63bf10b77f567c62c07f"
+    }
+  ],
+  "map_sha256": "10ed716048b87863d71a55232045093e3601152fcd5c0c99734c9d59b3c87cea"
+}

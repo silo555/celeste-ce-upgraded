@@ -36,8 +36,8 @@ void practice_update() {
     }
     if(!practice_mode) return;
     if(level_index() != 30) current_time++;
-    if(kb_IsDown(kb_KeyYequ)) {
-//        while(kb_IsDown(kb_KeyYequ));
+    if(kb_IsDown(kb_KeyTrace)) {
+//        while(kb_IsDown(kb_KeyTrace));
         prev_room();
     }
     if(kb_IsDown(kb_KeyGraph)) {

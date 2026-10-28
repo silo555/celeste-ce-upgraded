@@ -16,6 +16,7 @@
 #include "profiler.h"
 #include "practice.h"
 #include "speedrun.h"
+#include "run_controls.h"
 
 #define BASE_X ((LCD_WIDTH - 128 * 2) / 4)
 #define BASE_Y ((LCD_HEIGHT - 128 * 2) / 4)
@@ -35,8 +36,7 @@ static struct {
 
 static int gameFrame = 0;
 static int timerOffset = 0;
-// Ignore the Enter used to launch the program until it has been released.
-static bool resetHeld = true;
+static RunControls run_controls;
 
 const uint8_t mask[] = {
         0, 0, 0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -78,26 +78,48 @@ void init() {
     }
 }
 
+static void duplicate_game_columns() {
+    for(uint8_t y = 0; y < LCD_HEIGHT / 2; y++) {
+        memcpy(&gfx_vbuffer[y][LCD_WIDTH / 2 + BASE_X], &gfx_vbuffer[y][BASE_X], LCD_WIDTH / 2 - BASE_X * 2);
+    }
+}
+
+static void show_pause_badge() {
+    // Keep the untouched pre-pause screen in the other buffer. Neither _draw()
+    // nor _update() runs while paused: the original draw code mutates entities.
+    gfx_BlitScreen();
+    auto savedOffset = offset;
+    camera();
+    rectfill(91, 4, 124, 11, 0);
+    print("paused", 94, 6, 7);
+    offset = savedOffset;
+    duplicate_game_columns();
+    gfx_SwapDraw();
+}
+
 void update() {
     timer_Set(1, 0);
     profiler_add(total);
 
-    gameFrame++;
 #if FRAMESKIP
     timerOffset -= 32768 / 30;
 #endif
-    bool resetDown = kb_IsDown(kb_KeyEnter);
-    if(resetDown && !resetHeld) {
+    RunControls::Action action = run_controls.sample(kb_IsDown(kb_KeyDel), kb_IsDown(kb_KeyYequ), !is_title());
+    if(action == RunControls::reset) {
         reset_run();
-        // Discard old rendering debt; the new attempt starts at normal speed.
         timerOffset = -32768 / 30;
-    } else {
+    } else if(action == RunControls::pause_changed) {
+        if(run_controls.paused) show_pause_badge();
+        else gfx_SwapDraw(); // Restore the exact pre-pause frame, even in hitstop.
+        timerOffset = -32768 / 30;
+    } else if(!run_controls.paused) {
+        gameFrame++;
         _update();
         practice_update();
     }
-    resetHeld = resetDown;
 
-    if(freeze <= 0 && (!FRAMESKIP || timerOffset < 32768 / 30)) {
+    if(run_controls.paused) timerOffset = -32768 / 30;
+    if(!run_controls.paused && action != RunControls::pause_changed && freeze <= 0 && (!FRAMESKIP || timerOffset < 32768 / 30)) {
         // draw
         _draw();
         profiler_add(hud);
@@ -112,9 +134,7 @@ void update() {
         }
         profiler_end(hud);
         profiler_add(deinterlace);
-        for(uint8_t y = 0; y < LCD_HEIGHT / 2; y++) {
-            memcpy(&gfx_vbuffer[y][LCD_WIDTH / 2 + BASE_X], &gfx_vbuffer[y][BASE_X], LCD_WIDTH / 2 - BASE_X * 2);
-        }
+        duplicate_game_columns();
         profiler_end(deinterlace);
 #if FRAME_TIMER
         gfx_SetColor(0);
