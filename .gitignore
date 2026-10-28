@@ -2,3 +2,9 @@ bin/
 obj/
 .idea/
 CEleste.zip
+__pycache__/
+*.pyc
+*.exe
+*.pdb
+# Prepared CI configuration is backed up as an example; enable it when wanted.
+.github/workflows/build.yml

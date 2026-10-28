@@ -1,0 +1,88 @@
+CEleste: persistent timer, Enter reset, personal bests and split comparisons
+
+Installing the compiled build
+1. Connect your TI-84 Plus CE to your computer and open TI Connect CE.
+2. Back up your existing CELESTE program and CelesteS save AppVar if desired.
+3. Send CELESTE.8xp and clibs.8xg to the calculator. Replace CELESTE when asked.
+4. Launch CELESTE using your current game launcher, just as before.
+   If your OS needs arTIfiCE/Cesium, keep using that launcher.
+   arTIfiCE instructions: https://yvantt.github.io/arTIfiCE/
+
+Controls
+Arrow keys: move
+2nd: jump
+Alpha: dash
+Enter: immediately restart the entire run from room one
+Clear: quit and save
+Del: quit without saving
+
+Enter triggers once per press; holding it does not repeatedly reset the run.
+The Enter used to launch the program is ignored until it has been released.
+Enter also exits practice mode and starts a normal run. Practice bests remain
+saved when you quit, and restored the next time you launch the game.
+
+Timer
+The top-left timer stays visible during a normal run, deaths and room changes.
+It is anchored to the screen during shake and stops when you reach the summit,
+matching the original game's finish point. It reads MM:SS.mmm, with total
+minutes instead of hours. At the title screen it reads 00:00.000.
+The game runs at 30 simulation ticks per second, so the displayed milliseconds
+advance in 33/34 ms steps. This is game time, not a separate wall-clock timer.
+The existing practice-mode HUD and controls are retained.
+
+PBs and split comparisons
+The game saves your fastest completed run and its cumulative room splits,
+your fastest individual normal-run room times, and your practice-room bests.
+After each room, a small second line appears below the timer for one second:
+green -0.467 means 0.467 seconds ahead of your completed PB at that room;
+red +1.233 means 1.233 seconds behind. A tie is white +0.000.
+The comparison uses one actual completed PB, not a sum of best room times.
+Your first completion establishes that reference. Before a full PB exists,
+a faster repeat of an individual room can briefly show "room pb!" instead.
+At the summit, a new full-run PB shows "new pb!" for two seconds.
+Your full-run PB is also shown on the title screen and at the summit.
+
+Records are saved automatically after finishing a full run, and when quitting
+with either Clear or Del. There are no archive writes during a timed attempt.
+Enter resets the attempt without clearing records. Two small archived AppVars,
+CelPbA and CelPbB, keep alternating record copies with corruption checks.
+Keep those AppVars to retain PBs through RAM resets. An ordinary RAM reset
+preserves archive; deleting the AppVars or clearing archive removes PBs.
+If "pb save failed" appears at the summit, make room in archive and quit to
+retry. The previous archived record copy remains intact if a write fails.
+
+Clear also saves the current attempt's split history, so a resumed run can
+still qualify for a PB. Old CelesteS saves from the unmodified game still load,
+but cannot qualify for a new full-run PB until you start a fresh run with Enter.
+Practice mode never changes full-run PBs. Individual room records from an
+unfinished attempt are retained in the session and saved when finishing/quitting.
+
+Performance changes
+Release builds disable the developer profiler. Unflipped sprites with the
+default palette draw directly from the atlas, saving a temporary sprite copy.
+The original tick limiter, frame skipping, movement, collision, jump and dash
+code are retained. No measured FPS improvement is claimed without hardware
+or emulator testing.
+
+Build from source
+Install the official CE C/C++ toolchain (v11.2 matches this port's APIs).
+Run make gfx, then make. The result is bin/CELESTE.8xp.
+The included .github/workflows/build.yml can build on GitHub's Linux runners
+and produce a downloadable install artifact without a local Windows compiler.
+No workflow has been uploaded or run merely by including this file.
+
+Credits
+Celeste Classic by Maddy Thorson and Noel Berry.
+TI-84 Plus CE port by John "commandblockguy" Cesarz.
+Upstream source: https://github.com/commandz0/CEleste
+Libraries: https://github.com/CE-Programming/libraries/releases/tag/v15.0
+Local timer/reset/rendering modifications prepared 2026-10-27.
+
+Verification
+The record tracker was compiled and executed on a hosted C++ compiler with
+tests for pace deltas, PB replacement, reset, practice separation, persistence,
+save/resume, truncation and corrupted data. The entire calculator build was
+compiled with hosted ez80-clang 15.0.7, then linked and packaged using the
+official CEdev v11.2 tools. It has not yet been play-tested on a calculator or
+in an emulator with a calculator ROM. No device was modified by preparing this
+package. Source and build scripts are supplied separately for reproducibility.

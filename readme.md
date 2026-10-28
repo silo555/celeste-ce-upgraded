@@ -1,4 +1,24 @@
-## CEleste
+## CEleste — timer, reset and PB edition
+
+Private modified version of [commandz0/CEleste](https://github.com/commandz0/CEleste),
+preserving the original port's history, credits, and MIT license.
+
+- Persistent top-left `MM:SS.mmm` timer using the original 30 Hz game clock.
+- Enter restarts the run without a RAM reset.
+- Archived personal bests, room records, and comparisons with completed PB splits.
+- Rendering changes with the original movement and simulation pacing retained.
+
+See [INSTALL.txt](INSTALL.txt) for controls, save behavior, installation, and test
+details. The [private release](https://github.com/silo555/celeste-ce-upgraded/releases)
+contains the install ZIP and a source archive with the build scripts and recorded
+test results. Automated build/record/save tests passed; calculator and emulator
+gameplay testing remain unverified.
+
+The optional CI build configuration is saved as
+[`docs/build-workflow.yml.example`](docs/build-workflow.yml.example). It is included
+for reference and has not been activated in this repository.
+
+### Original port documentation
 
 A Celeste Classic port for the TI-84+CE and TI-83PCE graphing calculators.
 

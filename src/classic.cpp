@@ -8,6 +8,7 @@
 #include "emu.h"
 #include "profiler.h"
 #include "practice.h"
+#include "speedrun.h"
 
 // ~celeste~
 // maddy thorson + noel berry
@@ -53,6 +54,8 @@ bool start_game;
 int start_game_flash;
 int seconds;
 int minutes;
+// Separate from the animation counter, which keeps running at the summit.
+static int run_subframe;
 
 void _init(uint8_t save) {
     for(auto &cloud: clouds) {
@@ -86,6 +89,9 @@ void title_screen() {
         i = false;
     }
     frames = 0;
+    run_subframe = 0;
+    seconds = 0;
+    minutes = 0;
     deaths = 0;
     max_djump = 1;
     start_game = false;
@@ -97,12 +103,39 @@ void title_screen() {
 
 void begin_game() {
     frames = 0;
+    run_subframe = 0;
     seconds = 0;
     minutes = 0;
     music_timer = 0;
     start_game = false;
     //music(0,0,7);
+    speedrun_begin();
     load_room(0, 0);
+}
+
+static uint32_t run_time_ticks() {
+    return ((uint32_t)minutes * 60 + (uint32_t)seconds) * 30 + (uint32_t)run_subframe;
+}
+
+void reset_run() {
+    // Called between ticks, never while an object's update/draw is on the stack.
+    practice_mode = false;
+    practice_clear_hud();
+    for(bool &fruit: got_fruit) fruit = false;
+    deaths = 0;
+    max_djump = 1;
+    freeze = 0;
+    shake = 0;
+    will_restart = false;
+    delay_restart = 0;
+    pause_player = false;
+    flash_bg = false;
+    new_bg = false;
+    sfx_timer = 0;
+    start_game_flash = 0;
+    dead_particle_timer = 0;
+    camera();
+    begin_game();
 }
 
 int level_index() {
@@ -1007,9 +1040,7 @@ void RoomTitle::draw() {
         }
         //print("---",86,64-2,13)
 
-        if(!practice_mode) {
-            draw_time(4, 4);
-        }
+        // The run timer is drawn last by the HUD on every rendered frame.
     }
 }
 
@@ -1233,6 +1264,10 @@ void next_room() {
 
     if(level_index() == 30) return;
 
+    if(!practice_mode && !is_title()) {
+        speedrun_complete((unsigned)level_index(), run_time_ticks());
+    }
+
     if(room.x == 7) {
         load_room(0, room.y + 1);
     } else {
@@ -1287,7 +1322,9 @@ void load_room(uint8_t x, uint8_t y) {
 
 void _update() {
     profiler_add(update);
+    speedrun_tick();
     frames = ((frames + 1) % 30);
+    if(level_index() < 30) run_subframe = frames;
     if(frames == 0 and level_index() < 30) {
         seconds = ((seconds + 1) % 60);
         if(seconds == 0) {
@@ -1506,16 +1543,16 @@ void Object::draw() {
 }
 
 void draw_time(int x, int y) {
-    int s = seconds;
-    int m = minutes % 60;
-    int h = minutes / 60;
-
-    rectfill(x, y, x + 32, y + 6, 0);
-    print_int(h, x + 1, y + 1, 7, 2);
+    // Game time: one tick is 1/30 second, including dash hitstop and deaths.
+    // Keep total minutes instead of rolling over into hours.
+    int digits = 2;
+    for(int m = minutes; m >= 100; m /= 10) ++digits;
+    rectfill(x, y, x + (digits + 7) * 4, y + 6, 0);
+    print_int(minutes, x + 1, y + 1, 7, 2);
     print(":");
-    print_int(m, 2);
-    print(":");
-    print_int(s, 2);
+    print_int(seconds, 2);
+    print(".");
+    print_int(run_subframe * 1000 / 30, 3);
 }
 
 // helper functions //
@@ -1599,12 +1636,15 @@ bool needs_save() {
 #define SERIALIZE(var) ti_Read(&(var), sizeof(var), 1, handle);
 void load_save(uint8_t handle) __attribute__ ((optnone)) {
     TO_SERIALIZE(SERIALIZE)
+    run_subframe = frames;
     load_room(room.x, room.y);
+    speedrun_load_run(handle, (unsigned)level_index(), run_time_ticks(), practice_mode);
 }
 
 #define DESERIALIZE(var) ti_Write(&(var), sizeof(var), 1, handle);
 void store_save(uint8_t handle) __attribute__ ((optnone)) {
     TO_SERIALIZE(DESERIALIZE)
+    speedrun_store_run(handle);
 }
 
 uint8_t div256_24_buf[4];

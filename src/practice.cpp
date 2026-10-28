@@ -7,12 +7,24 @@
 #include <fontlibc.h>
 #include "classic.h"
 #include "emu.h"
+#include "speedrun.h"
 
 bool practice_mode = false;
 bool hud_active = true;
 int current_time = 0;
 int best_times[30];
 uint8_t hud_erase = 0;
+
+void practice_load_bests() {
+    for(unsigned room = 0; room < 30; ++room) {
+        best_times[room] = (int)speedrun_practice_best(room);
+    }
+}
+
+void practice_clear_hud() {
+    // Both draw buffers need clearing when leaving practice mode.
+    hud_erase = 2;
+}
 
 void practice_update() {
     if(is_title()) {
@@ -56,6 +68,7 @@ void practice_on_load() {
 }
 
 void practice_on_complete() {
+    speedrun_practice_complete((unsigned)level_index(), (uint32_t)current_time);
     if(best_times[level_index()] == 0 || current_time < best_times[level_index()]) {
         best_times[level_index()] = current_time;
     }

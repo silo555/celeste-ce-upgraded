@@ -290,6 +290,7 @@ void _draw();
 
 void title_screen();
 void begin_game();
+void reset_run();
 int level_index();
 bool is_title();
 void load_room(uint8_t x, uint8_t y);

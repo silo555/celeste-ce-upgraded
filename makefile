@@ -8,8 +8,8 @@ DESCRIPTION = "Celeste Classic"
 COMPRESSED = YES
 ARCHIVED = YES
 
-CFLAGS = -Wall -Wextra -Oz
-CXXFLAGS = -Wall -Wextra -Oz
+CFLAGS = -Wall -Wextra -Oz -DNDEBUG
+CXXFLAGS = -Wall -Wextra -Oz -DNDEBUG
 
 # ----------------------------
 

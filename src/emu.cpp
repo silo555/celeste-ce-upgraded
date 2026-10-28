@@ -15,6 +15,7 @@
 #include "gfx/gfx.h"
 #include "profiler.h"
 #include "practice.h"
+#include "speedrun.h"
 
 #define BASE_X ((LCD_WIDTH - 128 * 2) / 4)
 #define BASE_Y ((LCD_HEIGHT - 128 * 2) / 4)
@@ -34,6 +35,8 @@ static struct {
 
 static int gameFrame = 0;
 static int timerOffset = 0;
+// Ignore the Enter used to launch the program until it has been released.
+static bool resetHeld = true;
 
 const uint8_t mask[] = {
         0, 0, 0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -66,6 +69,8 @@ void init() {
     fontlib_SetTransparency(true);
     gen_lookups();
     profiler_init();
+    speedrun_init();
+    practice_load_bests();
     uint8_t save = ti_Open(SAVE_NAME, "r");
     _init(save);
     if(save) {
@@ -81,14 +86,30 @@ void update() {
 #if FRAMESKIP
     timerOffset -= 32768 / 30;
 #endif
-    _update();
-    practice_update();
+    bool resetDown = kb_IsDown(kb_KeyEnter);
+    if(resetDown && !resetHeld) {
+        reset_run();
+        // Discard old rendering debt; the new attempt starts at normal speed.
+        timerOffset = -32768 / 30;
+    } else {
+        _update();
+        practice_update();
+    }
+    resetHeld = resetDown;
 
     if(freeze <= 0 && (!FRAMESKIP || timerOffset < 32768 / 30)) {
         // draw
         _draw();
         profiler_add(hud);
         practice_draw_hud();
+        if(!practice_mode) {
+            // Anchor the HUD to the screen even during camera shake.
+            auto savedOffset = offset;
+            camera();
+            draw_time(4, 4);
+            speedrun_draw_hud();
+            offset = savedOffset;
+        }
         profiler_end(hud);
         profiler_add(deinterlace);
         for(uint8_t y = 0; y < LCD_HEIGHT / 2; y++) {
@@ -260,6 +281,13 @@ void spr(uint8_t n, int x, int y, uint8_t w, uint8_t h, bool flip_x, bool flip_y
     (void)w,(void)h;
     profiler_add(spr);
     gfx_sprite_t *sprite = atlas_tiles[n];
+    // Most sprites need neither a flip nor a palette remap. Draw directly
+    // from the atlas rather than copying 66 bytes into a temporary sprite.
+    if(!flip_x && !flip_y && default_pal) {
+        gfx_TransparentSprite(sprite, SCREEN_X(x), SCREEN_Y(y));
+        profiler_end(spr);
+        return;
+    }
     gfx_TempSprite(temp, 8, 8);
     if(flip_x) {
         gfx_FlipSpriteY(sprite, temp);
