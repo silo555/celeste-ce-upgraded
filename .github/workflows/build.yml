@@ -1,0 +1,54 @@
+name: Build and verify CEleste Speedrun
+on:
+  push:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'tools/**'
+      - 'makefile'
+      - 'icon.png'
+      - '.github/workflows/build.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install native dependencies and official CE toolchain
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libc6-i386
+          python3 -m pip install Pillow
+          curl --fail --location --retry 3 https://github.com/CE-Programming/toolchain/releases/download/v11.2/CEdev-Linux.tar.gz -o "$RUNNER_TEMP/cedev.tar.gz"
+          tar -xzf "$RUNNER_TEMP/cedev.tar.gz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/CEdev/bin" >> "$GITHUB_PATH"
+      - name: Regenerate graphics with official converter
+        run: |
+          cedev-config --version
+          make gfx
+      - name: Run record, save and actual pause-loop regression tests
+        run: python3 tools/test.py
+      - name: Compile calculator program
+        run: make
+      - name: Verify binary and original physics
+        run: python3 tools/verify.py
+      - name: Package install files
+        run: |
+          mkdir -p dist
+          curl --fail --location --retry 3 https://github.com/CE-Programming/libraries/releases/download/v15.0/clibs.8xg -o dist/clibs.8xg
+          python3 tools/package.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CEleste-Speedrun
+          if-no-files-found: error
+          path: |
+            dist/
+            build/tests/results.json
+            build/verification.json
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: Speedrun-failure-diagnostics
+          path: build/
