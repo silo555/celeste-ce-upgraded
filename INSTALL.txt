@@ -50,7 +50,7 @@ Your full-run PB is also shown on the title screen and at the summit.
 
 Records are saved automatically after finishing a full run, and when quitting
 with Clear. There are no archive writes during a timed attempt.
-Y= pause, Del resets the attempt without clearing records. Two small archived AppVars,
+Del resets the attempt without clearing records. Two small archived AppVars,
 CelPbA and CelPbB, keep alternating record copies with corruption checks.
 Keep those AppVars to retain PBs through RAM resets. An ordinary RAM reset
 preserves archive; deleting the AppVars or clearing archive removes PBs.

@@ -34,6 +34,6 @@ int main() {
     assert(tracker.popup_ticks==original_popup);
     c.sample(false,false,true); c.sample(false,true,true);
     if(!c.paused)tracker.tick();
-    assert(tracker.popup_ticks+1==original_popup);
+    assert(tracker.popup_ticks+1u==original_popup);
     puts("PASS title ignores pause and paused PB popup remains frozen");
 }
