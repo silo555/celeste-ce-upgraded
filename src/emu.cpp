@@ -147,7 +147,9 @@ void update() {
         gfx_SwapDraw();
     }
     profiler_end(total);
-    if(kb_IsDown(kb_KeyTrace)) profiler_print();
+    if(kb_IsDown(kb_KeyTrace)) {
+        profiler_print();
+    }
     do {
         if(kb_IsDown(kb_KeyClear)) return;
     } while(FRAMESKIP && (int)(timerOffset + timer_Get(1)) < 0);
